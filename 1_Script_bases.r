@@ -27,8 +27,8 @@ fredr_set_key("5d121558ce891d0b386e789bb617544a")  # es la mia profe
 
 fredr_series_observations(series_id = "POILBREUSDM", 
                          observation_start = as.Date("1992-01-01"), 
-                         observation_end = as.Date("2026-05-01")) %>%
-  select(date, value) %>%
+                         observation_end = as.Date("2026-05-01")) |>
+  select(date, value) |>
   rename(Precio_Petroleo = value) -> precio_petroleo
 
 # 2) datos del ISE
@@ -51,13 +51,13 @@ df_TI <-  read_excel("BASES\\graficador_series(TI).xlsx")
 
 # eliminamos el primer renglón que es el tipo de dato
 
-df_TI <- df_TI %>% slice(-1)
+df_TI <- df_TI |> slice(-1)
 
 # Cambiar todas las fechas al primer día de su mes correspondiente
-df_TI <- df_TI %>%
+df_TI <- df_TI |>
   mutate(Fecha = floor_date(dmy(Fecha), "month"))
 # eliminamos los NA
-df_TI <- df_TI %>% filter(!is.na(Fecha))
+df_TI <- df_TI |> filter(!is.na(Fecha))
 
 # 4) Datos de inflación
 
@@ -65,15 +65,21 @@ df_inflacion <- read_excel("BASES\\graficador_series(IF).xlsx")
 
 # eliminamos el primer renglón que es el tipo de dato
 
-df_inflacion <- df_inflacion %>% slice(-1)
+df_inflacion <- df_inflacion |> slice(-1)
 
 # eliminamos el ultimo dato ya que es la fecha de descarga
 
-df_inflacion <- df_inflacion %>% slice(-n())
+df_inflacion <- df_inflacion |> slice(-n())
 
 # eliminar los NA
 
-df_inflacion <- df_inflacion %>% filter(!is.na(Fecha))
+df_inflacion <- df_inflacion |> filter(!is.na(Fecha))
+
+# trasformamos las fechas
+
+# Cambiar todas las fechas al primer día de su mes correspondiente
+df_inflacion <- df_inflacion |>
+  mutate(Fecha = floor_date(dmy(Fecha), "month"))
 
 # 4) TRM
 
@@ -81,14 +87,103 @@ df_TRM <- read_excel("BASES\\graficador_series(TRM).xlsx")
 
 # eliminamos el primer renglón que es el tipo de dato
 
-df_TRM <- df_TRM %>% slice(-1)
+df_TRM <- df_TRM |> slice(-1)
 
 # el ultimo dato es la fecha de descarga, lo eliminamos
 
-df_TRM <- df_TRM %>% slice(-n())
+df_TRM <- df_TRM |> slice(-n())
 
 # eliminamos los NA
 
-df_TRM <- df_TRM %>% filter(!is.na(Fecha))
+df_TRM <- df_TRM |> filter(!is.na(Fecha))
+
+# transformamos las fechas
+
+df_TRM <- df_TRM |>
+  mutate(Fecha = floor_date(dmy(Fecha), "month"))
+
+# 5) Indice de producción industrial (IPI)
+
+df_IPI <- read_excel("BASES\\anex-IPI-abr2026.xlsx", 
+sheet = "3. Indices total por clase ", range = "A9:E157")
+
+# seleccionamos las columnas que necesitamos
+
+df_IPI <-  df_IPI |>  select(Año, Mes, `Producción real`)
+
+# transformamos las fechas a un formato de fecha
+
+df_IPI <- df_IPI |>
+  mutate(Fecha = as.Date(paste(Año, Mes, "01", sep = "-"))) |>
+  select(Fecha, `Producción real`)
+
+# 6) El PIB :)
+
+df_PIB <- read_excel("BASES\\anex-ProduccionConstantes-Itrim2026.xlsx",
+ sheet = "Cuadro 4", range = "C29:CJ29", col_names = FALSE)
+
+df_PIB_Final <- data.frame(
+   date = seq(
+     as.Date("2005-01-01"),
+     by = "3 months",
+     length.out = ncol(df_PIB) - 1
+   ),
+   df_PIB = as.numeric(gsub(",", ".", unlist(df_PIB[1, -1])))
+ )
+
+# 7) El Índice de Expectativas de los Consumidores (IEC), nueva variable incluida en el modelo
+
+# se coloca a mano porque Fedesarrollo publica la serie en un pdf.
+
+fecha <- seq(as.Date("2014-01-01"), as.Date("2026-01-01"), by = "month")
+
+ICC <- c(
+27.3, 15.7, 18.5, 18.5, 23.9, 26.5, 26.6, 20.5, 17.5, 21.7, 24.5, 22.4,
+17.9, 14.0, 2.3, 8.2, 13.7, 14.7, 2.6, -0.4, 4.3, 6.8, 6.7, 1.1,
+-21.3, -21.0, -20.1, -13.0, -12.5, -11.3, -14.9, -6.6, -2.1, -3.2, -4.6, -10.7,
+-30.2, -24.3, -21.1, -12.8, -16.9, -11.7, -9.5, -15.9, -10.3, -10.6, -10.0, -6.0,
+-5.4, -7.8, -3.2, 1.5, 8.9, 15.5, 9.8, 4.7, -0.7, -1.3, -19.6, -8.3,
+-2.8, -5.6, 1.2, -9.6, -5.0, -6.3, -5.1, -11.8, -10.7, -9.8, -14.4, -9.5,
+-1.2, -11.2, -23.8, -41.3, -34.0, -33.1, -32.7, -25.4, -21.6, -18.6, -13.6, -10.4,
+-20.8, -14.6, -11.4, -34.2, -34.3, -22.3, -7.5, -8.2, -3.0, -1.3, -1.4, -7.0,
+-13.5, -17.5, -17.8, -17.5, -14.7, 2.9, -10.4, -2.4, -11.5, -19.5, -24.8, -22.3,
+-28.6, -27.8, -28.5, -28.8, -22.8, -14.1, -17.4, -18.8, -17.9, -14.0, -20.9, -17.3,
+-7.9, -9.4, -13.0, -11.4, -14.1, -12.7, -9.0, -15.3, -16.0, -3.7, -5.7, -3.4,
+-1.1, -12.0, -7.1, -8.6, -3.8, 2.2, 5.3, -2.4, 1.6, 13.6, 17.0, 19.9,
+18.2
+)
+
+ICC_df <- data.frame(
+  fecha = fecha,
+  ICC = ICC
+)
 
 
+
+# Unimos todas las bases de datos en una sola
+
+
+
+
+df_final <- precio_petroleo |> 
+  left_join(ISE_final, by = c("date" = "date")) |>
+  left_join(df_TI, by = c("date" = "Fecha")) |>
+  left_join(df_inflacion, by = c("date" = "Fecha")) |>
+  left_join(df_TRM, by = c("date" = "Fecha")) |>
+  left_join(df_IPI, by = c("date" = "Fecha")) |>
+  left_join(df_PIB_Final, by = c("date" = "date")) |> 
+  left_join(ICC_df, by = c("date" = "fecha"))
+
+# eliminamos los NA en produccion real y en ise
+
+df_final <- df_final |> filter(!is.na(`Producción real`), !is.na(ISE))
+
+# por ultimo cambiamos el nombre de produccion real a IPI
+
+df_final <- df_final |> rename(IPI = `Producción real`)
+
+# descargamos la base de datos final
+
+write_csv(df_final, "BASES\\df_MF-BVAR.csv")
+
+head(df_final)
