@@ -89,6 +89,17 @@ El PIB se registra únicamente en el primer mes de cada trimestre (enero, abril,
 
 ---
 
+### `ICC`
+Índice de Expectativas de los Consumidores.
+
+- Fuente: Fedesarrollo.
+- Serie utilizada: **Datos manuales** ya que es publicada en un pdf.
+- Frecuencia: Mensual.
+- Unidad: Índice.
+
+
+---
+
 ## Periodo de estudio
 
 Enero de 2014 – Diciembre de 2025.
@@ -98,3 +109,7 @@ Enero de 2014 – Diciembre de 2025.
 ## Observaciones
 
 Las series utilizadas corresponden a versiones oficiales publicadas por el DANE, el Banco de la República y FRED. Cuando la entidad productora ofrece series ajustadas por efecto estacional y calendario, se utilizaron dichas versiones con el fin de eliminar patrones estacionales y facilitar el análisis de la dinámica económica subyacente.
+
+## Observaciones segundo commit
+
+Se agrega la base de datos de ICC para tomar las espectativas como variable que aporta al pronostico del PIB.
